@@ -2,17 +2,26 @@ import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.*;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class ParserKML {
-
-	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
-		
-		List<SewersNode> sewersNodes = new ArrayList<>();
-		List<SewersPipe> sewersPipes = new ArrayList<>();
-		
+	
+	static List<SewersNode> sewersNodes = new ArrayList<>();
+	static List<SewersPipe> sewersPipes = new ArrayList<>();
+	
+	static String randomColor() {
+		Random rand = new Random();
+		int r = rand.nextInt(255);
+		int g = rand.nextInt(255);
+		int b = rand.nextInt(255);
+		return String.format("#ff%02x%02x%02x", r, g, b);  
+	}
+	
+	static void parseKMLFile() throws SAXException, IOException, ParserConfigurationException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		
@@ -29,6 +38,8 @@ public class ParserKML {
 			
 			String placemarkName = placemarkElem.getElementsByTagName("name").item(0).getTextContent();
 			
+			String color = randomColor();
+			
 			NodeList lineStrings = placemarkElem.getElementsByTagName("LineString");
 			Node lineString = lineStrings.item(0);
 			Element lineStringElem = (Element) lineString;
@@ -38,7 +49,7 @@ public class ParserKML {
 			
 			String[] coordinatesArray = coordinates.split(" ");
 			for(int j = 0; j < coordinatesArray.length; j++) {
-				String color = "#FF0000FF";
+				
 				String[] lonLatHeight = coordinatesArray[j].split(",");
 				if(lonLatHeight.length >= 3) {
 					int index = sewersNodes.size();
@@ -53,13 +64,31 @@ public class ParserKML {
 			}
 			
 		}
-		
-		for (SewersNode sewersNode : sewersNodes) {
-			System.out.println(sewersNode.createInsert());
-		}
-		for (SewersPipe sewersPipe : sewersPipes) {
-			System.out.println(sewersPipe.createInsert());
+	}
+	
+	static void saveInsertsFile() {
+		try {
+			FileWriter myWriter = new FileWriter(".\\results\\sewersInserts.sql");
+			for (SewersNode sewersNode : sewersNodes) {
+				System.out.println(sewersNode.createInsert());
+				myWriter.write(sewersNode.createInsert() + "\n");
+			}
+			for (SewersPipe sewersPipe : sewersPipes) {
+				System.out.println(sewersPipe.createInsert());
+				myWriter.write(sewersPipe.createInsert() + "\n");
+			}
+		    myWriter.close();
+		} catch (IOException e) {
+		    System.out.println("An error occurred.");
+		    e.printStackTrace();
 		}
 	}
+
+	public static void main(String[] args) throws SAXException, IOException, ParserConfigurationException{
+		parseKMLFile();
+		saveInsertsFile();
+	}
+	
+	
 
 }
