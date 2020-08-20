@@ -11,6 +11,7 @@ public class ParserKML {
 	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
 		
 		List<SewersNode> sewersNodes = new ArrayList<>();
+		List<SewersPipe> sewersPipes = new ArrayList<>();
 		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
@@ -36,17 +37,28 @@ public class ParserKML {
 			String coordinates = coordinatesList.item(0).getTextContent();
 			
 			String[] coordinatesArray = coordinates.split(" ");
-			for(String pointCoordinates : coordinatesArray) {
-				String[] lonLatHeight = pointCoordinates.split(",");
-				int index = sewersNodes.size();
-				SewersNode sewersNode = new SewersNode(index, Double.parseDouble(lonLatHeight[0]), Double.parseDouble(lonLatHeight[1]), "#FF0000FF", placemarkName);
-				sewersNodes.add(sewersNode);
+			for(int j = 0; j < coordinatesArray.length; j++) {
+				String color = "#FF0000FF";
+				String[] lonLatHeight = coordinatesArray[j].split(",");
+				if(lonLatHeight.length >= 3) {
+					int index = sewersNodes.size();
+					SewersNode sewersNode = new SewersNode(index, Double.parseDouble(lonLatHeight[0]), Double.parseDouble(lonLatHeight[1]), color, placemarkName);
+					sewersNodes.add(sewersNode);
+					if(j > 0) {
+						int pipeIndex = sewersPipes.size();
+						SewersPipe sewersPipe = new SewersPipe(pipeIndex, index-1, index, color);
+						sewersPipes.add(sewersPipe);
+					}
+				}
 			}
 			
 		}
 		
 		for (SewersNode sewersNode : sewersNodes) {
 			System.out.println(sewersNode.createInsert());
+		}
+		for (SewersPipe sewersPipe : sewersPipes) {
+			System.out.println(sewersPipe.createInsert());
 		}
 	}
 
